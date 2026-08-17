@@ -1,0 +1,20 @@
+{
+  "python_syntax_errors": [],
+  "engine_smoke_test": {
+    "signal": "UP",
+    "up_probability": 0.752097021676952,
+    "confidence": 0.7375098556074055,
+    "agreement": 0.8,
+    "no_trade_reasons": [
+      "VOLUME_UNAVAILABLE",
+      "MTF_UNAVAILABLE"
+    ],
+    "components": [
+      "L1 Candle Vision",
+      "L2 Momentum",
+      "L3 Trend",
+      "L4 Volatility",
+      "L5 Levels"
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "python_syntax_errors": [],
+  "installer_workflow_present": true,
+  "inno_script_present": true,
+  "pyinstaller_spec_present": true
+}
