@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-
   workflow_dispatch:
 
 permissions:
@@ -16,67 +15,35 @@ jobs:
     runs-on: windows-latest
 
     steps:
-
-      # ==================================================
-      # 1. CHECKOUT
-      # ==================================================
       - name: Checkout repository
         uses: actions/checkout@v6
 
-
-      # ==================================================
-      # 2. PYTHON
-      # ==================================================
       - name: Set up Python 3.12
         uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-          cache: "pip"
+          cache: pip
           cache-dependency-path: requirements.txt
 
-
-      # ==================================================
-      # 3. INSTALL PYTHON DEPENDENCIES
-      # ==================================================
-      - name: Install dependencies
+      - name: Install Python dependencies
         shell: pwsh
         run: |
           python -m pip install --upgrade pip
-
           pip install -r requirements.txt
-
           pip install pyinstaller
 
-
-      # ==================================================
-      # 4. SHOW ENVIRONMENT
-      # ==================================================
-      - name: Show environment
-        shell: pwsh
-        run: |
-          Write-Host "===== PYTHON ====="
-          python --version
-
-          Write-Host ""
-          Write-Host "===== PIP ====="
-          python -m pip --version
-
-          Write-Host ""
-          Write-Host "===== PROJECT ====="
-          Get-Location
-          Get-ChildItem
-
-
-      # ==================================================
-      # 5. VERIFY IMPORTANT FILES
-      # ==================================================
-      - name: Verify installer project
+      - name: Verify project files
         shell: pwsh
         run: |
           $required = @(
             "main.py",
             "requirements.txt",
             "config.json",
+            "vision/models.py",
+            "vision/detector.py",
+            "analysis/engine.py",
+            "ui/main_window.py",
+            "ui/overlay.py",
             "installer/QuotexVisionAI.spec",
             "installer/QuotexVisionAI.iss"
           )
@@ -87,74 +54,52 @@ jobs:
             }
           }
 
-          Write-Host "All required installer files found."
+          Write-Host "All required files are present."
 
-
-      # ==================================================
-      # 6. PYTHON SYNTAX CHECK
-      # ==================================================
-      - name: Validate Python source
+      - name: Validate Python
         shell: pwsh
         run: |
           python -m compileall .
-
           if ($LASTEXITCODE -ne 0) {
             Write-Error "Python syntax validation failed."
           }
 
-
-      # ==================================================
-      # 7. IMPORT CHECK
-      # ==================================================
-      - name: Validate critical imports
+      - name: Validate imports
         shell: pwsh
         run: |
           python -c "from vision.detector import CandleDetector; from analysis.engine import AnalysisEngine; from ui.overlay import Overlay; print('Critical imports OK')"
-
           if ($LASTEXITCODE -ne 0) {
             Write-Error "Critical module import failed."
           }
 
-
-      # ==================================================
-      # 8. BUILD PYINSTALLER APPLICATION
-      # ==================================================
-      - name: Build application with PyInstaller
+      - name: Clean PyInstaller output
         shell: pwsh
         run: |
           Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue
           Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
+          Remove-Item -Recurse -Force installer/dist -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path installer/dist | Out-Null
 
-          pyinstaller `
-            installer/QuotexVisionAI.spec `
-            --clean `
-            --noconfirm
-
+      - name: Build application EXE
+        shell: pwsh
+        run: |
+          pyinstaller installer/QuotexVisionAI.spec --clean --noconfirm
           if ($LASTEXITCODE -ne 0) {
             Write-Error "PyInstaller build failed."
           }
 
-
-      # ==================================================
-      # 9. VERIFY PYINSTALLER OUTPUT
-      # ==================================================
       - name: Verify application EXE
         shell: pwsh
         run: |
           $exe = "dist/QuotexVisionAI/QuotexVisionAI.exe"
 
           if (!(Test-Path $exe)) {
-            Write-Error "QuotexVisionAI.exe was not created."
+            Write-Error "Expected EXE not found: $exe"
           }
 
-          Write-Host ""
-          Write-Host "EXE CREATED:"
+          Write-Host "Application EXE created:"
           Get-Item $exe
 
-
-      # ==================================================
-      # 10. INSTALL INNO SETUP
-      # ==================================================
       - name: Install Inno Setup
         shell: pwsh
         run: |
@@ -164,23 +109,7 @@ jobs:
             Write-Error "Inno Setup installation failed."
           }
 
-
-      # ==================================================
-      # 11. PREPARE INSTALLER OUTPUT
-      # ==================================================
-      - name: Prepare installer directory
-        shell: pwsh
-        run: |
-          New-Item `
-            -ItemType Directory `
-            -Force `
-            -Path installer/dist | Out-Null
-
-
-      # ==================================================
-      # 12. BUILD NORMAL WINDOWS INSTALLER
-      # ==================================================
-      - name: Build Setup EXE
+      - name: Build normal Windows installer
         shell: pwsh
         run: |
           $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
@@ -189,48 +118,31 @@ jobs:
             Write-Error "Inno Setup compiler not found."
           }
 
-          & $iscc `
-            "installer/QuotexVisionAI.iss"
+          & $iscc "installer/QuotexVisionAI.iss"
 
           if ($LASTEXITCODE -ne 0) {
             Write-Error "Inno Setup build failed."
           }
 
-
-      # ==================================================
-      # 13. VERIFY INSTALLER
-      # ==================================================
-      - name: Verify Setup EXE
+      - name: Verify installer
         shell: pwsh
         run: |
           $setup = "installer/dist/QuotexVisionAI-Setup.exe"
 
           if (!(Test-Path $setup)) {
-            Write-Error "QuotexVisionAI-Setup.exe was not created."
+            Write-Error "Installer was not created: $setup"
           }
 
-          Write-Host ""
-          Write-Host "===================================="
-          Write-Host "INSTALLER CREATED SUCCESSFULLY"
-          Write-Host "===================================="
-
+          Write-Host "Installer created successfully:"
           Get-Item $setup
 
-
-      # ==================================================
-      # 14. UPLOAD NORMAL WINDOWS INSTALLER
-      # ==================================================
-      - name: Upload Windows Installer
+      - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
           name: QuotexVisionAI-Windows-Installer
           path: installer/dist/QuotexVisionAI-Setup.exe
           if-no-files-found: error
 
-
-      # ==================================================
-      # 15. UPLOAD PORTABLE APPLICATION TOO
-      # ==================================================
       - name: Upload portable application
         uses: actions/upload-artifact@v4
         with:
