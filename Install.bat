@@ -47,3 +47,6 @@ echo run_app.bat
 echo.
 pause
 endlocal
+
+echo.
+echo Source installation completed.

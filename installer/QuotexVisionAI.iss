@@ -1,5 +1,5 @@
 #define MyAppName "Quotex Vision AI"
-#define MyAppVersion "2.1"
+#define MyAppVersion "2.2"
 #define MyAppPublisher "Quotex Vision AI"
 #define MyAppExeName "QuotexVisionAI.exe"
 
@@ -8,17 +8,13 @@ AppId={{B5D3D1C8-9B8E-4E4F-9E7E-6A6F9CE1C321}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
-
 DefaultDirName={autopf}\Quotex Vision AI
 DefaultGroupName={#MyAppName}
-
 OutputDir=dist
 OutputBaseFilename=QuotexVisionAI-Setup
-
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
-
 ArchitecturesInstallIn64BitMode=x64compatible
 DisableProgramGroupPage=yes
 

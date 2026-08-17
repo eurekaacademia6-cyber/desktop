@@ -1,0 +1,7 @@
+{
+  "python_syntax_errors": [],
+  "removed_old_spec": true,
+  "config_bundle_lookup": true,
+  "workflow_direct_root_main": true,
+  "inno_uses_root_dist": true
+}
